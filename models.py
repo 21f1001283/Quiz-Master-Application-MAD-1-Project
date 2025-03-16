@@ -57,3 +57,7 @@ class Score(db.Model):
     quiz_id = db.Column(db.Integer, db.ForeignKey('quiz.id', ondelete='CASCADE'), nullable=False)
     score = db.Column(db.Integer, nullable=False)
     remarks = db.Column(db.String(256), nullable=True)
+
+
+with app.app_context():
+    db.create_all()
