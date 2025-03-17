@@ -1,6 +1,7 @@
 from app import app
 from flask_sqlalchemy import SQLAlchemy
 from datetime import timedelta
+from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy(app)
 
@@ -8,9 +9,9 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     passhash = db.Column(db.String(256), nullable=False)
-    name = db.Column(db.String(80), nullable=True)
+    name = db.Column(db.String(80), nullable=False)
     is_admin = db.Column(db.Boolean, nullable=False, default=False)
-    qualifications = db.Column(db.String(256), nullable=True)
+    qualification = db.Column(db.String(256), nullable=True)
     dob= db.Column(db.Date, nullable=True)
 
     scores = db.relationship('Score', backref='user', lazy=True)
@@ -61,3 +62,11 @@ class Score(db.Model):
 
 with app.app_context():
     db.create_all()
+
+    #if admin exists, else create admin
+    admin = User.query.filter_by(is_admin=True).first()
+    if not admin:
+        password_hash = generate_password_hash('admin')
+        admin = User(username='admin', passhash=password_hash, name='Admin', is_admin=True)
+        db.session.add(admin)
+        db.session.commit()
