@@ -1,0 +1,50 @@
+{% extends 'layout.html' %}
+    
+    {% block title %}
+        Admin Dashboard
+    {% endblock %}
+    
+    {% block content %}
+        <h1 class="fs-1 fw-bold text-primary text-center text-nowrap"> Admin Dashboard</h1>
+
+        <h2 class="display-5 fw-bold">
+            Subjects:
+        </h2>
+        <a href="{{url_for('add_subject')}}" class="display-5 fw-bold btn btn-success">Add
+            <i class = "fas fa-plus"></i>
+        </a>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Subject ID</th>
+                    <th>Subject Name</th>
+                    <th>No. of Chapters</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for subject in subjects %}
+                <tr>
+                    <td>{{subject.id}}</td>
+                    <td>{{subject.name}}</td>
+                    <td>{{subject.chapters|length}}</td>
+                    <td>
+                        <a href="{{url_for('view_subject', id=subject.id)}}" class="btn btn-primary">
+                            View
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{{url_for('edit_subject', id=subject.id)}}" class="btn btn-primary">
+                            Edit
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{{url_for('delete_subject', id=subject.id)}}" class="btn btn-danger">
+                            Delete
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endblock %}

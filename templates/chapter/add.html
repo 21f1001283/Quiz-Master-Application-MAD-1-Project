@@ -1,0 +1,38 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Add Chapter
+{% endblock %}
+
+{% block content %}
+    <h1 class="display-5 fw-bold"> New Chapter</h1>
+    <form action="{{url_for('add_chapter_post')}}" method="post" class="form">
+        <div class="form-group">
+            <label for="name" class="form-label" >Chapter Name:</label>
+            <input type="text" name="name" id="name" class="form-control" required>
+        </div>
+        <div class="form-group">
+            <label for="description" class="form-label">Description:</label>
+            <textarea name="description" id="description" class="form-control"></textarea>
+        </div>
+        <div class="form-group">
+            <label for="subject_id" class="form-label">Subject:</label>
+            <select name="subject_id" id="subject_id" class="form-control" required>
+                {% for sub in subjects %}
+                {% if sub.id == subject.id %}
+                    <option value="{{sub.id}}" selected>{{sub.name}}</option>
+                {% else %}
+                    <option value="{{sub.id}}">{{sub.name}}</option>
+                {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+        <br>
+        <div class="form-group">
+            <button type="submit" class=" fw-bold btn btn-success">  
+                Add
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+    </form>
+{% endblock %}

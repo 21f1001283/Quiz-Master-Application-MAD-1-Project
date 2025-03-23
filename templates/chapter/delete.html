@@ -1,0 +1,18 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Delete Chapter
+{% endblock %}
+
+{% block content %}
+    <h1 class="display-5 fw-bold"> Delete Chapter</h1>
+    <h2 class="display-7 text-center">Are you sure you want to delete {{chapter.name}}?</h2>
+    <form action="" method="post" class="form">
+        <div class="form-group" style="text-align: center">
+            <button type="submit" class="btn btn-danger" >
+                <i class="fas fa-trash"></i>
+                Delete
+            </button>
+        </div>
+    </form>
+{% endblock %}

@@ -5,7 +5,7 @@ from models import db, User, Score, Subject, Chapter, Quiz, Question
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 
-# decorator fo auth_required
+# decorator for auth_required
 def auth_required(func):
     @wraps(func)
     def inner(*args, **kwargs):
@@ -16,9 +16,27 @@ def auth_required(func):
             return redirect(url_for('login'))
     return inner
 
+# decorator for admin_required
+def admin_required(func):
+    @wraps(func)
+    def inner(*args, **kwargs):
+        if 'user_id' not in session:
+            flash('Please, login to continue!')
+            return redirect(url_for('login'))
+        user = User.query.get(session['user_id'])
+        if not user.is_admin:
+            flash('You are not authorized to view this page!')
+            return redirect(url_for('index'))
+        return func(*args, **kwargs)
+    return inner
+
+
 @app.route('/')
 @auth_required
 def index():
+    user = User.query.get(session['user_id'])
+    if user.is_admin:
+        return redirect(url_for('admin'))
     return render_template('index.html')
 
 @app.route('/login')
@@ -66,6 +84,11 @@ def register_post():
             dob = None  # Handle invalid formats
     else:
         dob = None  # Handle empty input
+    
+    if dob > datetime.now().date():
+        flash('Invalid date of birth!')
+        return redirect(url_for('register'))
+    
     qualification = request.form.get('qualification')
     if not qualification:
         qualification = None
@@ -130,5 +153,177 @@ def profile_post():
 def logout():
     session.pop('user_id')
     return redirect(url_for('login'))
+
+# ROUTES FOR ADMIN----------------
+
+@app.route('/admin')
+@admin_required
+def admin():
+    subjects = Subject.query.all()
+    return render_template('admin.html', subjects=subjects)
+
+# Routes for subjects to be added by admin
+@app.route('/subject/add')
+@admin_required
+def add_subject():
+    return render_template('subject/add.html')
+
+@app.route('/subject/add', methods=['POST'])
+@admin_required
+def add_subject_post():
+    name = request.form.get('name')
+    description = request.form.get('description')
+    if not name:
+        flash('Please, fill out all fields!')
+        return redirect(url_for('add_subject'))
+    
+    subject = Subject(name=name, description=description)
+    db.session.add(subject)
+    db.session.commit()
+    flash('Subject added successfully!')
+    return redirect(url_for('admin'))
+
+@app.route('/subject/<int:id>/')
+@admin_required
+def view_subject(id):
+    subject = Subject.query.get(id)
+    if not subject:
+        flash('Subject does not exist!')
+        return redirect(url_for('admin'))
+    return render_template('subject/view.html', subject=subject)
+
+@app.route('/subject/<int:id>/edit')
+@admin_required
+def edit_subject(id):
+    subject = Subject.query.get(id)
+    if not subject:
+        flash('Subject does not exist!')
+        return redirect(url_for('admin'))
+    return render_template('subject/edit.html', subject=subject)
+
+@app.route('/subject/<int:id>/edit', methods=['POST'])
+@admin_required
+def edit_subject_post(id):
+    subject = Subject.query.get(id)
+    if not subject:
+        flash('Subject does not exist!')
+        return redirect(url_for('admin'))
+    name = request.form.get('name')
+    description = request.form.get('description')
+    if not name:
+        flash('Please, fill out all fields!')
+        return redirect(url_for('edit_subject', id=id))
+    
+    subject.name = name
+    subject.description = description
+    db.session.commit()
+    flash('Subject updated successfully!')
+    return redirect(url_for('admin'))
+
+
+@app.route('/subject/<int:id>/delete')
+@admin_required
+def delete_subject(id):
+    subject = Subject.query.get(id)
+    if not subject:
+        flash('Subject does not exist!')
+        return redirect(url_for('admin'))
+    return render_template('subject/delete.html', subject=subject)
+
+@app.route('/subject/<int:id>/delete', methods=['POST'])
+@admin_required
+def delete_subject_post(id):
+    subject = Subject.query.get(id)
+    if not subject:
+        flash('Subject does not exist!')
+        return redirect(url_for('admin'))
+    db.session.delete(subject)
+    db.session.commit()
+    flash('Subject deleted successfully!')
+    return redirect(url_for('admin'))
+
+
+# Routes for chapters to be added by admin
+
+@app.route('/chapter/add/<int:subject_id>')
+@admin_required
+def add_chapter(subject_id):
+    subjects = Subject.query.all()
+    subject = Subject.query.get(subject_id)
+    if not subject:
+        flash('Subject does not exist!')
+        return redirect(url_for('admin'))
+    return render_template('chapter/add.html', subject=subject, subjects=subjects)
+
+@app.route('/chapter/add/', methods=['POST'])
+@admin_required
+def add_chapter_post():
+    name = request.form.get('name')
+    description = request.form.get('description')
+    subject_id = request.form.get('subject_id')
+
+    subject = Subject.query.get(subject_id)
+    if not subject:
+        flash('Subject does not exist!')
+        return redirect(url_for('admin'))
+    if not name:
+        flash('Please, fill out all fields!')
+        return redirect(url_for('add_chapter', subject_id=subject_id))
+    
+    chapter = Chapter(name=name, description=description, subject_id=subject_id)
+    db.session.add(chapter)
+    db.session.commit()
+    flash('Chapter added successfully!')
+    return redirect(url_for('view_subject', id=subject_id))
+
+@app.route('/chapter/<int:id>/edit')
+@admin_required
+def edit_chapter(id):
+    subjects = Subject.query.all()
+    chapter = Chapter.query.get(id)
+    return render_template('chapter/edit.html', chapter=chapter, subjects=subjects)
+
+@app.route('/chapter/<int:id>/edit', methods=['POST'])
+@admin_required
+def edit_chapter_post(id):
+    name = request.form.get('name')
+    description = request.form.get('description')
+    subject_id = request.form.get('subject_id')
+
+    chapter = Chapter.query.get(id)
+    if not chapter:
+        flash('Chapter does not exist!')
+        return redirect(url_for('admin'))
+    if not name:
+        flash('Please, fill out all fields!')
+        return redirect(url_for('edit_chapter', id=id))
+    
+    chapter.name = name
+    chapter.description = description
+    chapter.subject_id = subject_id
+    db.session.commit()
+    flash('Chapter updated successfully!')
+    return redirect(url_for('view_subject', id=subject_id))
+
+@app.route('/chapter/<int:id>/delete')
+@admin_required
+def delete_chapter(id):
+    chapter = Chapter.query.get(id)
+    if not chapter:
+        flash('Chapter does not exist!')
+        return redirect(url_for('admin'))
+    return render_template('chapter/delete.html', chapter=chapter)
+
+@app.route('/chapter/<int:id>/delete', methods=['POST'])
+@admin_required
+def delete_chapter_post(id):
+    chapter = Chapter.query.get(id)
+    if not chapter:
+        flash('Chapter does not exist!')
+    db.session.delete(chapter)
+    db.session.commit()
+    flash('Chapter deleted successfully!')
+    return redirect(url_for('view_subject', id=chapter.subject_id))
+
 
     
