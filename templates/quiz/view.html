@@ -1,0 +1,44 @@
+{% extends 'layout.html' %}
+    
+    {% block title %}
+        Questions of Quiz {{quiz.id}}({{quiz.chapter.name}})
+    {% endblock %}
+    
+    {% block content %}
+        <h1 class="fs-1 fw-bold text-primary text-center text-nowrap"> Questions of Quiz {{quiz.id}}({{quiz.chapter.name}})</h1>
+
+        <h2 class="display-5 fw-bold">
+            Questions:
+        </h2>
+        <a href="{{url_for('add_question', quiz_id = quiz.id)}}" class="display-5 fw-bold btn btn-success">Add
+            <i class = "fas fa-plus"></i>
+        </a>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Question ID</th>
+                    <th>Question's Title</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for question in quiz.questions %}
+                <tr>
+                    <td>{{question.id}}</td>
+                    <td>{{question.question_title}}</td>
+                    <td>
+                        <a href="{{url_for('edit_question', id=question.id)}}" class="btn btn-primary">
+                            Edit
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{{url_for('delete_question', id=question.id)}}" class="btn btn-danger">
+                            Delete
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endblock %}

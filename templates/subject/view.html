@@ -28,7 +28,14 @@
                 <tr>
                     <td>{{chapter.id}}</td>
                     <td>{{chapter.name}}</td>
-                    <td>{{chapter.quizzes.questions|length}}</td>
+                    <td>
+                        {% set total_questions = namespace(count=0) %}
+                        {% for qu in chapter.quizzes %}
+                            {% set total_questions.count = total_questions.count + qu.questions|length %}
+                        {% endfor %}
+                        {{ total_questions.count }}
+                    </td>
+
                     <td>
                         <a href="{{url_for('edit_chapter', id=chapter.id)}}" class="btn btn-primary">
                             Edit

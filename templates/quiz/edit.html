@@ -1,0 +1,47 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Edit Quiz {{quiz.id}} ({{quiz.chapter.name}})
+{% endblock %}
+
+{% block content %}
+    <h1 class="display-5 fw-bold"> Edit Quiz {{quiz.id}} ({{quiz.chapter.name}})</h1>
+
+    <form action=""  method="post" class="form">
+        <div class="form-group">
+            <label for="chapter_id" class="form-label">Chapter:</label>
+            <select name="chapter_id" id="chapter_id" class="form-control" required>
+                {% for ch in chapters %}
+                    {% if ch.id == quiz.chapter_id %}
+                        <option value="{{ch.id}}" selected>{{ch.name}}</option>
+                    {% else %}
+                        <option value="{{ch.id}}">{{ch.name}}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="date_of_quiz" class="form-label">Date of Quiz:</label>
+            <input type="date" name="date_of_quiz" id="date_of_quiz" class="form-control" value="{{quiz.date_of_quiz}}" required>
+        </div>
+        <div class="form-group">
+            <label for="time_duration" class="form-label">Time Duration:</label>
+            <input 
+                type="time" 
+                name="time_duration" 
+                id="time_duration" 
+                class="form-control" 
+                value="{{ '%02d:%02d' | format(quiz.time_duration.total_seconds() // 3600, (quiz.time_duration.total_seconds() % 3600) // 60) }}" 
+                required>
+        </div>
+        <div class="form-group">
+            <label for="remarks" class="form-label">Remarks:</label>
+            <textarea name="remarks" id="remarks" class="form-control" >{{quiz.remarks}}</textarea>
+        <div class="form-group">
+            <button type="submit" class="btn btn-success">
+                <i class="fas fa-pen"></i>
+                Update
+            </button>
+        </div>
+    </form>
+{% endblock %}

@@ -43,6 +43,7 @@ class Quiz(db.Model):
 class Question(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     quiz_id = db.Column(db.Integer, db.ForeignKey('quiz.id', ondelete='CASCADE'), nullable=False)
+    question_title = db.Column(db.String(100), nullable=False)
     question_statement = db.Column(db.String(500), nullable=False)
     option1 = db.Column(db.String(100), nullable=False)
     option2 = db.Column(db.String(100), nullable=False)

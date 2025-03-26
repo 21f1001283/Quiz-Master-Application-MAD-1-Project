@@ -9,11 +9,15 @@ from functools import wraps
 def auth_required(func):
     @wraps(func)
     def inner(*args, **kwargs):
-        if 'user_id' in session:
-            return func(*args, **kwargs)
-        else:
+        if 'user_id' not in session:
             flash('Please, login to continue!')
             return redirect(url_for('login'))
+            
+        user = User.query.get(session['user_id'])
+        if user is None:  # Check if user is found
+            # flash('User not found!')
+            return redirect(url_for('login'))
+        return func(*args, **kwargs)
     return inner
 
 # decorator for admin_required
@@ -24,6 +28,9 @@ def admin_required(func):
             flash('Please, login to continue!')
             return redirect(url_for('login'))
         user = User.query.get(session['user_id'])
+        if user is None:  # Check if user is found
+            # flash('User not found!')
+            return redirect(url_for('login'))
         if not user.is_admin:
             flash('You are not authorized to view this page!')
             return redirect(url_for('index'))
@@ -324,6 +331,228 @@ def delete_chapter_post(id):
     db.session.commit()
     flash('Chapter deleted successfully!')
     return redirect(url_for('view_subject', id=chapter.subject_id))
+
+# Routes for QUIZ MANAGEMENT Dashboard--------------
+@app.route('/quiz')
+@admin_required
+def quiz():
+    quizzes = Quiz.query.all()
+    return render_template('quiz.html', quizzes=quizzes)
+
+# Routes for quizzes to be added by admin
+@app.route('/quiz/add')
+@admin_required
+def add_quiz():
+    chapters = Chapter.query.all()
+    return render_template('quiz/add.html', chapters=chapters)
+
+@app.route('/quiz/add', methods=['POST'])
+@admin_required
+def add_quiz_post():
+    remarks = request.form.get('remarks')
+    date_of_quiz = request.form.get('date_of_quiz')
+    time_duration = request.form.get('time_duration')
+    chapter_id = request.form.get('chapter_id')
+
+    chapter = Chapter.query.get(chapter_id)
+    if not chapter:
+        flash('Chapter does not exist!')
+        return redirect(url_for('quiz'))
+    if not date_of_quiz or not time_duration:
+        flash('Please, fill out all fields!')
+        return redirect(url_for('add_quiz',chapter_id=chapter_id)) 
+    
+    date_of_quiz = datetime.strptime(date_of_quiz, "%Y-%m-%d").date()
+    # Split into hours and minutes and convert to total minutes
+    hours, minutes = map(int, time_duration.split(':'))
+    total_minutes = hours * 60 + minutes  # Convert to total minutes
+    # Create timedelta object
+    duration = timedelta(minutes=total_minutes)
+    
+    if date_of_quiz < datetime.now().date():
+        flash('Invalid date for quiz!')
+        return redirect(url_for('add_quiz'))
+
+    quiz = Quiz(remarks=remarks, date_of_quiz=date_of_quiz, time_duration=duration, chapter_id=chapter_id)
+    db.session.add(quiz)
+    db.session.commit()
+    flash('Quiz added successfully!')
+    return redirect(url_for('quiz'))
+
+
+@app.route('/quiz/<int:id>/')
+@admin_required
+def view_quiz(id):
+    quiz = Quiz.query.get(id)
+    if not quiz:
+        flash('Quiz does not exist!')
+        return redirect(url_for('admin'))
+    return render_template('quiz/view.html', quiz=quiz)
+
+@app.route('/quiz/<int:id>/edit')
+@admin_required
+def edit_quiz(id):
+    chapters = Chapter.query.all()
+    quiz = Quiz.query.get(id)
+    if not quiz:
+        flash('Quiz does not exist!')
+        return redirect(url_for('quiz'))
+    return render_template('quiz/edit.html', quiz=quiz, chapters=chapters)
+
+@app.route('/quiz/<int:id>/edit', methods=['POST'])
+@admin_required
+def edit_quiz_post(id):
+    quiz = Quiz.query.get(id)
+    if not quiz:
+        flash('Quiz does not exist!')
+        return redirect(url_for('quiz'))
+    remarks = request.form.get('remarks')
+    date_of_quiz = request.form.get('date_of_quiz')
+    time_duration = request.form.get('time_duration')
+    chapter_id = request.form.get('chapter_id')
+
+    if not date_of_quiz or not time_duration:
+        flash('Please, fill out all fields!')
+        return redirect(url_for('edit_quiz', id=id))
+    
+    date_of_quiz = datetime.strptime(date_of_quiz, "%Y-%m-%d").date()
+    # Split into hours and minutes and convert to total minutes
+    hours, minutes = map(int, time_duration.split(':'))
+    total_minutes = hours * 60 + minutes  # Convert to total minutes
+    # Create timedelta object
+    duration = timedelta(minutes=total_minutes)
+    
+    if date_of_quiz < datetime.now().date():
+        flash('Invalid date for quiz!')
+        return redirect(url_for('edit_quiz', id=id))
+    
+    quiz.remarks = remarks
+    quiz.date_of_quiz = date_of_quiz
+    quiz.time_duration = duration
+    quiz.chapter_id = chapter_id
+    db.session.commit()
+    flash('Quiz updated successfully!')
+    return redirect(url_for('quiz'))
+
+
+@app.route('/quiz/<int:id>/delete')
+@admin_required
+def delete_quiz(id):
+    quiz = Quiz.query.get(id)
+    if not quiz:
+        flash('Quiz does not exist!')
+        return redirect(url_for('quiz'))
+    return render_template('quiz/delete.html', quiz=quiz)
+
+@app.route('/quiz/<int:id>/delete', methods=['POST'])
+@admin_required
+def delete_quiz_post(id):
+    quiz = Quiz.query.get(id)
+    if not quiz:
+        flash('Quiz does not exist!')
+        return redirect(url_for('quiz'))
+    db.session.delete(quiz)
+    db.session.commit()
+    flash('Quiz deleted successfully!')
+    return redirect(url_for('quiz'))
+
+# Routes for Questions to be added to the Quizzes------------------
+@app.route('/question/add/<int:quiz_id>')
+@admin_required
+def add_question(quiz_id):
+    quizzes = Quiz.query.all()
+    quiz = Quiz.query.get(quiz_id)
+    if not quiz:
+        flash('Quiz does not exist!')
+        return redirect(url_for('quiz'))
+    return render_template('question/add.html', quiz=quiz, quizzes=quizzes)
+
+@app.route('/quiz/add/', methods=['POST'])
+@admin_required
+def add_question_post():
+    question_title = request.form.get('question_title')
+    question_statement = request.form.get('question_statement')
+    option1 = request.form.get('option1')
+    option2 = request.form.get('option2')
+    option3 = request.form.get('option3')
+    option4 = request.form.get('option4')
+    correct_option = request.form.get('correct_option')
+    quiz_id = request.form.get('quiz_id')
+
+    quiz = Quiz.query.get(quiz_id)
+    if not quiz:
+        flash('Quiz does not exist!')
+        return redirect(url_for('quiz'))
+    if not question_title or not question_statement or not option1 or not option2 or not option3 or not option4 or not correct_option:
+        flash('Please, fill out all fields!')
+        return redirect(url_for('add_question', quiz_id=quiz_id))
+    
+    question = Question(question_title=question_title, question_statement=question_statement, option1=option1, option2=option2, option3=option3, option4=option4, correct_option=correct_option, quiz_id=quiz_id)
+    db.session.add(question)
+    db.session.commit()
+    flash('Question added successfully!')
+    return redirect(url_for('view_quiz', id=quiz_id))
+
+@app.route('/question/<int:id>/edit')
+@admin_required
+def edit_question(id):
+    quizzes = Quiz.query.all()
+    question = Question.query.get(id)
+    return render_template('question/edit.html', question=question, quizzes=quizzes)
+
+@app.route('/question/<int:id>/edit', methods=['POST'])
+@admin_required
+def edit_question_post(id):
+    question_title = request.form.get('question_title')
+    question_statement = request.form.get('question_statement')
+    option1 = request.form.get('option1')
+    option2 = request.form.get('option2')
+    option3 = request.form.get('option3')
+    option4 = request.form.get('option4')
+    correct_option = request.form.get('correct_option')
+    quiz_id = request.form.get('quiz_id')
+
+    question = Question.query.get(id)
+    if not question:
+        flash('Question does not exist!')
+        return redirect(url_for('quiz'))
+    if not question_title or not question_statement or not option1 or not option2 or not option3 or not option4 or not correct_option:
+        flash('Please, fill out all fields!')
+        return redirect(url_for('edit_question', id=id))
+    
+    question.question_title = question_title
+    question.question_statement = question_statement
+    question.option1 = option1
+    question.option2 = option2
+    question.option3 = option3
+    question.option4 = option4
+    question.correct_option = correct_option
+    question.quiz_id = quiz_id
+    db.session.commit()
+    flash('Question updated successfully!')
+    return redirect(url_for('view_quiz', id=quiz_id))
+
+@app.route('/question/<int:id>/delete')
+@admin_required
+def delete_question(id):
+    question = Question.query.get(id)
+    if not question:
+        flash('Question does not exist!')
+        return redirect(url_for('Quiz'))
+    return render_template('question/delete.html', question=question)
+
+@app.route('/question/<int:id>/delete', methods=['POST'])
+@admin_required
+def delete_question_post(id):
+    question = Question.query.get(id)
+    if not question:
+        flash('Question does not exist!')
+    db.session.delete(question)
+    db.session.commit()
+    flash('Question deleted successfully!')
+    return redirect(url_for('view_quiz', id=question.quiz_id))
+
+
 
 
     

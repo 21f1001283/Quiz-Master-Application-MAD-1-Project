@@ -1,0 +1,18 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Delete Quiz
+{% endblock %}
+
+{% block content %}
+    <h1 class="display-5 fw-bold"> Delete Quiz</h1>
+    <h2 class="display-7 text-center">Are you sure you want to delete Quiz {{quiz.id}} ({{quiz.chapter.name}})?</h2>
+    <form action="" method="post" class="form">
+        <div class="form-group" style="text-align: center">
+            <button type="submit" class="btn btn-danger" >
+                <i class="fas fa-trash"></i>
+                Delete
+            </button>
+        </div>
+    </form>
+{% endblock %}
