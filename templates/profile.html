@@ -7,12 +7,12 @@ Profile Page
 {% block content %}
 <h1 class="display-4">
 Hello, 
-<span class="text-muted"> @{{user.username }}!</span>
+<span class="text-muted"> {{user.name }}!</span>
 </h1>
 <div class="profile-pic">
     <img src="https://api.dicebear.com/9.x/lorelei/svg?seed={{user.name}}" width = 100 alt="" >
 </div>
-<a href="{{ url_for('logout') }}" class="btn btn-outline-danger">Logout</a>
+
 
 <form action="" method="post" class="form">
     <div class="form-group">
@@ -31,8 +31,17 @@ Hello,
         <label for="name" class="form-label">Name:</label>
         <input type="text" name="name" id="name" class="form-control" value = "{{user.name}}" required>
     </div>
-    <div class="form-group">
-        <button type="submit" class="btn btn-primary">Update</button>
+    <div class = "buttons d-flex justify-content-center align-items-center">
+       
+    <div class="form-group m-3">
+        <button type="submit" class="btn btn-primary">
+        <i class="fas fa-pen"></i>
+        Update
+        </button>
+    </div>
+    <a href="{{ url_for('logout') }}" class="btn btn-danger">
+        <i class="fa fa-sign-out" aria-hidden="true"></i>
+        Logout</a>
     </div>
 </form>
 {% endblock %}

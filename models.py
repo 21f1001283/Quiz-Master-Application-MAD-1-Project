@@ -1,6 +1,6 @@
 from app import app
 from flask_sqlalchemy import SQLAlchemy
-from datetime import timedelta
+from datetime import timedelta, datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy(app)
@@ -14,7 +14,7 @@ class User(db.Model):
     qualification = db.Column(db.String(256), nullable=True)
     dob= db.Column(db.Date, nullable=True)
 
-    scores = db.relationship('Score', backref='user', lazy=True)
+    scores = db.relationship('Score', backref='user', lazy=True, cascade='all, delete-orphan')
 
 class Subject(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -39,6 +39,7 @@ class Quiz(db.Model):
     chapter_id = db.Column(db.Integer, db.ForeignKey('chapter.id', ondelete='CASCADE'), nullable=False)
 
     questions = db.relationship('Question', backref='quiz', lazy=True, cascade='all, delete-orphan')
+    scores = db.relationship('Score', backref='quiz', lazy=True, cascade='all, delete-orphan')
 
 class Question(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -59,6 +60,7 @@ class Score(db.Model):
     quiz_id = db.Column(db.Integer, db.ForeignKey('quiz.id', ondelete='CASCADE'), nullable=False)
     score = db.Column(db.Integer, nullable=False)
     remarks = db.Column(db.String(256), nullable=True)
+    date_attempted = db.Column(db.Date, nullable=False)
 
 
 with app.app_context():

@@ -1,0 +1,47 @@
+{% extends 'layout.html' %}
+    
+    {% block title %}
+        Quiz Score
+    {% endblock %}
+    
+    {% block content %}
+        <h1 class="fs-1 fw-bold text-primary text-center text-nowrap"> Quiz Score</h1>
+
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Quiz ID/ Title</th>
+                    <th>No. of Questions</th>
+                    <th>Date</th>
+                    <th>Score</th>
+                    <th>Score (%) </th>
+                    <th>Attempt No.</th>
+                    <th>Action</th>
+
+                </tr>
+            </thead>
+            <tbody>
+                {% for score in scores %}
+                <tr>
+                    <td>{{score.id}}</td>
+                    <td>Quiz {{score.quiz.id}} ({{score.quiz.chapter.name}})</td>
+                    <td>{{score.quiz.questions | length}}</td>
+                    <td>{{score.date_attempted}}</td>
+                    <td>{{score.score}}/{{score.quiz.questions | length}}</td>
+                    <td>
+                        {{ (score.score / (score.quiz.questions | length) * 100) | round(0) }}% <!-- Calculate percentage -->
+                    </td>
+                    <td>{{ score.attempt_number }}</td>
+                    <td>
+                        <a href="{{url_for('view_quiz_answers', id=score.id)}}" class="btn btn-primary">
+                            View Answers
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endblock %}

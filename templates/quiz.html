@@ -20,6 +20,8 @@
                     <th>Quiz ID</th>
                     <th>Chapter Name</th>
                     <th>No. of Questions</th>
+                    <th>Submission Due Date for User</th>
+
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -29,6 +31,7 @@
                     <td>{{quiz.id}}</td>
                     <td>{{quiz.chapter.name}}</td>
                     <td>{{quiz.questions|length}}</td>
+                    <td>{{quiz.date_of_quiz}}</td>
                     <td>
                         <a href="{{url_for('view_quiz', id=quiz.id)}}" class="btn btn-primary">
                             View

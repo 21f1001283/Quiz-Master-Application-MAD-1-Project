@@ -1,0 +1,42 @@
+{% extends 'layout.html' %}
+    
+    {% block title %}
+                        Details of Quiz {{quiz.id}}({{quiz.chapter.name}}) 
+    {% endblock %}
+    
+    {% block content %}
+        <h1 class="fs-1 fw-bold text-primary text-center text-nowrap"> Details of Quiz {{quiz.id}}({{quiz.chapter.name}}) </h1>
+
+        <form action="{{url_for('user_close_quiz_details')}}" class="form">
+         <div>
+            <label class="form-label" for="quiz_id"><strong>Quiz ID:</strong></label>
+            <input type="text" name="quiz_id" id="quiz_id" class="form-control" value="{{quiz.id}}" readonly>
+        </div>
+        <div>
+            <label class ="form-group" for="subject_name"><strong>Subject:</strong></label>
+            <input type="text" name="subject_name" id="subject_name" class="form-control" value="{{quiz.chapter.subject.name}}" readonly>
+        </div>
+        <div>
+            <label class ="form-group" for="chapter_name"><strong>Chapter:</strong></label>
+            <input type="text" name="chapter_name" id="chapter_name" class="form-control" value="{{quiz.chapter.name}}" readonly>
+        </div>
+        <div>
+            <label class ="form-group" for="no_of_questions"><strong>No. of Questions:</strong></label>
+            <input type="text" name="no_of_questions" id="no_of_questions" class="form-control" value="{{quiz.questions|length}}" readonly>
+        </div>
+        <div>
+            <label class ="form-group" for="scheduled_date"><strong>Scheduled Date:</strong></label>
+            <input type="text" name="scheduled_date" id="scheduled_date" class="form-control" value="{{quiz.date_of_quiz}}" readonly>
+        </div>
+        <div>
+            <label class ="form-group" for="duration"><strong>Duration (hh:mm):</strong></label>
+            <input type="text" name="duration" id="duration" class="form-control" value="{{quiz.time_duration}}" readonly>
+        </div>
+         <div class="form-group m-3">
+            <button type="submit" class="btn btn-primary">
+            <i class="fas fa-rectangle-xmark"></i>
+            Close
+            </button>
+        </div> 
+        </form>
+    {% endblock %}

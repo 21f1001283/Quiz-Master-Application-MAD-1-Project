@@ -15,7 +15,10 @@
     {% endblock %}
 </head>
 <body>
+    {% if request.endpoint != 'start_quiz' %}
     {% include 'navbar.html'   %}
+    {%endif %}
+
 
     {% include 'messages.html'   %}
 

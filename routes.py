@@ -1,9 +1,10 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, json
 from datetime import datetime, timedelta
 from app import app
 from models import db, User, Score, Subject, Chapter, Quiz, Question
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
+from sqlalchemy.sql import func
 
 # decorator for auth_required
 def auth_required(func):
@@ -44,8 +45,15 @@ def index():
     user = User.query.get(session['user_id'])
     if user.is_admin:
         return redirect(url_for('admin'))
-    return render_template('index.html')
+    
+    subjects = Subject.query.all()
+    now = datetime.now()
+    #now= datetime(2025,4,2)
+    # Query quizzes that are still valid (future or today)
+    quizzes = Quiz.query.filter(Quiz.date_of_quiz >= now.date()).all()
+    return render_template('index.html', subjects=subjects, quizzes=quizzes)
 
+#------------------COMMON ROUTES FOR BOTH USER & ADMIN------------------
 @app.route('/login')
 def login():
     return render_template('login.html')
@@ -69,6 +77,7 @@ def login_post():
         return redirect(url_for('login'))
     
     session['user_id'] = user.id
+    session['is_admin'] = user.is_admin
     flash('Login successful!')
     return redirect(url_for('index'))
 
@@ -161,7 +170,7 @@ def logout():
     session.pop('user_id')
     return redirect(url_for('login'))
 
-# ROUTES FOR ADMIN----------------
+# ----------ROUTES FOR ADMIN----------------
 
 @app.route('/admin')
 @admin_required
@@ -331,6 +340,44 @@ def delete_chapter_post(id):
     db.session.commit()
     flash('Chapter deleted successfully!')
     return redirect(url_for('view_subject', id=chapter.subject_id))
+
+#----Route for Admin to view User Details----
+@app.route('/admin/users')
+@admin_required
+def admin_view_users():
+    users = User.query.all()
+    return render_template('admin/users.html', users=users)
+
+# Route for Admin to view Summary---
+@app.route('/admin/summary')
+@admin_required
+def admin_summary():
+    # Fetch subject-wise user attempts
+    subject_attempts = (
+        db.session.query(Subject.name, func.count(Score.id).label('attempt_count'))
+        .join(Chapter, Chapter.subject_id == Subject.id)
+        .join(Quiz, Quiz.chapter_id == Chapter.id)
+        .join(Score, Score.quiz_id == Quiz.id)
+        .group_by(Subject.name)
+        .all()
+    )
+
+    # Fetch subject-wise top scores
+    subject_top_scores = (
+        db.session.query(Subject.name, func.max(Score.score).label('top_score'))
+        .join(Chapter, Chapter.subject_id == Subject.id)
+        .join(Quiz, Quiz.chapter_id == Chapter.id)
+        .join(Score, Score.quiz_id == Quiz.id)
+        .group_by(Subject.name)
+        .all()
+    )
+
+    return render_template(
+        'admin/summary.html',
+        subject_attempts=subject_attempts,
+        subject_top_scores=subject_top_scores
+    )
+
 
 # Routes for QUIZ MANAGEMENT Dashboard--------------
 @app.route('/quiz')
@@ -553,6 +600,159 @@ def delete_question_post(id):
     return redirect(url_for('view_quiz', id=question.quiz_id))
 
 
+#-------USER ROUTES---------
+@app.route('/user_view_quiz/<int:id>/')
+@auth_required
+def user_view_quiz(id):
+    quiz = Quiz.query.get(id)
+    if not quiz:
+        flash('Quiz does not exist!')
+        return redirect(url_for('index'))
+    questions = quiz.questions
+    return render_template('user/view_quiz.html', quiz=quiz)
 
+@app.route('/user_view_quiz/close')
+@auth_required
+def user_close_quiz_details():
+        return redirect(url_for('index'))
+
+@app.route('/start_quiz/<int:id>', methods=['GET', 'POST'])
+@auth_required
+def start_quiz(id):
+    quiz = Quiz.query.get(id)
+    if not quiz:
+        flash('Quiz does not exist!')
+        return redirect(url_for('index'))
+    questions = quiz.questions
+    current_question = int(request.args.get('current_question', 0))
+    if 'remaining_time' not in session:
+        session['remaining_time'] = quiz.time_duration.total_seconds()
+
+    if request.method == 'POST':
+        selected_answer = request.form.get('ans')
+        if not selected_answer:
+            selected_answer = ""
+        # Store the selected answer in the session
+        if 'answers' not in session:
+            session['answers'] = {}
+        answers = session['answers']  
+        answers[str(questions[current_question].id)] = selected_answer
+        session['answers'] = answers 
+
+        session['remaining_time'] = int(request.form.get('remaining_time', session['remaining_time']))
+
+        
+        return redirect(url_for('start_quiz', id=id, current_question=current_question + 1))
+
+        
+    return render_template('user/start_quiz.html',
+                           quiz=quiz, questions=questions,
+                           current_question=current_question,
+                           remaining_time=session['remaining_time'])
+
+
+@app.route('/submit_quiz/<int:id>', methods=['POST'])
+@auth_required
+def submit_quiz(id):
+    quiz = Quiz.query.get(id)
+    if not quiz:
+        flash('Quiz does not exist!')
+        return redirect(url_for('index'))
+    
+    score = 0  # Initialize score
+    #----score for last question---------
+    selected_last_answer = request.form.get('ans')
+    length_of_questions = len(quiz.questions)
+    #if selected_last_answer and selected_last_answer == quiz.questions[length_of_questions-1].correct_option:
+        #score += 1
+    
+    questions = quiz.questions
+    answers = session.get('answers', {}) 
+    answers[str(quiz.questions[length_of_questions-1].id)]= selected_last_answer
+    print(answers)
+
+    for question in questions:
+        selected_answer = answers.get(str(question.id))  # Use str(question.id) to match the key format
+        if selected_answer and selected_answer == question.correct_option:
+            score += 1 
+
+    # Convert the user_answers dictionary to a JSON string
+    #user_answers_json = json.dumps(answers)
+    score_record = Score(user_id=session['user_id'],
+                         quiz_id=quiz.id, score=score,
+                         date_attempted=datetime.now().date())
+    
+    db.session.add(score_record)
+    db.session.commit()
+
+    session.pop('answers', None)
+    session.pop('remaining_time', None)
+
+    flash(f'Quiz submitted successfully! Your score: {score}/{len(questions)}')
+    return redirect(url_for('index'))
+
+@app.route('/score')
+@auth_required
+def score():
+    user = User.query.get(session['user_id'])
+    scores = Score.query.filter_by(user_id=user.id).all()
+    for score in scores:
+    # Count how many times the user has attempted this quiz before this score
+        attempt_number = Score.query.filter(
+            Score.user_id == user.id,
+            Score.quiz_id == score.quiz_id,
+            (Score.date_attempted < score.date_attempted) |  # Earlier dates
+            ((Score.date_attempted == score.date_attempted) & (Score.id <= score.id))  # Same date, earlier or same ID
+        ).count()
+        score.attempt_number = attempt_number 
+    return render_template('user/score.html', scores=scores)
+
+@app.route('/view_quiz_answers/<int:id>')
+@auth_required
+def view_quiz_answers(id):
+    score = Score.query.get(id)
+    quiz = Quiz.query.get(score.quiz_id)
+    questions = quiz.questions
+    return render_template('user/quiz_ans.html', questions=questions)
+
+@app.route('/user/summary')
+@auth_required
+def user_summary():
+    user_id = session['user_id']
+
+    # Fetch subject-wise number of quizzes attempted by the user
+    subject_attempts = (
+        db.session.query(Subject.name, func.count(Score.id).label('attempt_count'))
+        .join(Chapter, Chapter.subject_id == Subject.id)
+        .join(Quiz, Quiz.chapter_id == Chapter.id)
+        .join(Score, Score.quiz_id == Quiz.id)
+        .filter(Score.user_id == user_id)
+        .group_by(Subject.name)
+        .all()
+    )
+
+    # Fetch month-wise number of quizzes attempted by the user
+    month_attempts = (
+        db.session.query(
+            func.strftime('%Y-%m', Score.date_attempted).label('month'),
+            func.count(Score.id).label('attempt_count')
+        )
+        .filter(Score.user_id == user_id)
+        .group_by(func.strftime('%Y-%m', Score.date_attempted))
+        .order_by('month')
+        .all()
+    )
+
+    return render_template(
+        'user/summary.html',
+        subject_attempts=subject_attempts,
+        month_attempts=month_attempts
+    )
+
+
+
+
+
+    
 
     

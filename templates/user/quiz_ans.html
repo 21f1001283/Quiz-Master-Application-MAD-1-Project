@@ -1,0 +1,31 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Correct Answers
+{% endblock %}
+
+{% block content %}
+    <h1 class="fs-1 fw-bold text-primary text-center text-nowrap">Correct Answers</h1>
+
+    <div class="container mt-4">
+        {% for question in questions %}
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5>Question {{ question.id }}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{ question.question_statement }}</p>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">Option 1: {{ question.option1 }}</li>
+                        <li class="list-group-item">Option 2: {{ question.option2 }}</li>
+                        <li class="list-group-item">Option 3: {{ question.option3 }}</li>
+                        <li class="list-group-item">Option 4: {{ question.option4 }}</li>
+                    </ul>
+                    <div class="mt-3">
+                        <strong>Correct Answer: {{ question.correct_option }}</strong>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

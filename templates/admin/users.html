@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+
+{% block title %}Admin - View Users{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">User Details</h1>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Username</th>
+            <th>Name</th>
+            <th>Qualification</th>
+            <th>Date of Birth</th>
+            <th>Admin</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        <tr>
+            <td>{{ user.id }}</td>
+            <td>{{ user.username }}</td>
+            <td>{{ user.name }}</td>
+            <td>{{ user.qualification or 'N/A' }}</td>
+            <td>{{ user.dob or 'N/A' }}</td>
+            <td>{{ 'Yes' if user.is_admin else 'No' }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

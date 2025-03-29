@@ -1,0 +1,101 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+User Summary
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center text-primary mb-4 fw-bold">Your Summary</h1>
+
+    <!-- Subject-wise Quizzes Attempted -->
+    <h2 class="fs-4 fw-bold text-center">Subject-wise Quizzes Attempted</h2>
+    <div class="chart-container" style="position: relative; width: 80%; height: auto; margin: 0 auto;">
+        <canvas id="subjectBarChart"></canvas>
+    </div>
+
+    <!-- Month-wise Quizzes Attempted -->
+    <h2 class="fs-4 fw-bold text-center mt-5">Month-wise Quizzes Attempted</h2>
+    <div class="chart-container" style="position: relative; width: 80%; height: auto; margin: 0 auto;">
+        <canvas id="monthLineChart"></canvas>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Data for Subject-wise Quizzes Attempted (Bar Chart)
+    const subjectBarChartLabels = {{ subject_attempts | map(attribute=0) | list | tojson }};
+    const subjectBarChartData = {{ subject_attempts | map(attribute=1) | list | tojson }};
+
+    const subjectBarChartConfig = {
+        type: 'bar',
+        data: {
+            labels: subjectBarChartLabels,
+            datasets: [{
+                label: 'Quizzes Attempted',
+                data: subjectBarChartData,
+                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    };
+
+    // Render Subject-wise Bar Chart
+    const subjectBarChartCtx = document.getElementById('subjectBarChart').getContext('2d');
+    new Chart(subjectBarChartCtx, subjectBarChartConfig);
+
+    // Data for Month-wise Quizzes Attempted (Line Chart)
+    const monthLineChartLabels = {{ month_attempts | map(attribute=0) | list | tojson }};
+    const monthLineChartData = {{ month_attempts | map(attribute=1) | list | tojson }};
+
+    const monthLineChartConfig = {
+        type: 'line',
+        data: {
+            labels: monthLineChartLabels,
+            datasets: [{
+                label: 'Quizzes Attempted',
+                data: monthLineChartData,
+                backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 2,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    };
+
+    // Render Month-wise Line Chart
+    const monthLineChartCtx = document.getElementById('monthLineChart').getContext('2d');
+    new Chart(monthLineChartCtx, monthLineChartConfig);
+</script>
+{% endblock %}

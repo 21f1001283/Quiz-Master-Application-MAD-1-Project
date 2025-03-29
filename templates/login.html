@@ -21,8 +21,11 @@ Login Page
         <label for="password" class="form-label">Password</label>
         <input type="password" name="password" class="form-control" required>
     </div>
-    <div class="form-group">
+    <div class="form-group m-3 text-center">
         <input type="submit" value="Login" class="btn btn-primary">
+    </div>
+    <div class="text-center mt-2 ">
+        <p>Don't have an account? <a href="{{ url_for('register') }}" class="text-primary">Register</a></p>
     </div>
 </form>
 

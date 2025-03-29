@@ -1,5 +1,43 @@
 {% extends 'layout.html' %}
 
 {% block content %}
-    This is the content of index
+    {% include 'searchbar.html' with context  %}
+    <hr>
+    <h1 class="fs-1 fw-bold text-primary text-center text-nowrap"> Upcoming Quizzes</h1>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Quiz ID/ Title</th>
+                <th>No. of Questions</th>
+                <th>End Date for Submission</th>
+                <th>Duration</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for quiz in quizzes %}
+            <tr>
+                <td>Quiz {{quiz.id}} ({{quiz.chapter.name}})</td>
+                <td>{{quiz.questions|length}}</td>
+                <td>{{quiz.date_of_quiz}}</td>
+                <td>
+                    {% set total_minutes = (quiz.time_duration.total_seconds() // 60) | int %}
+                    {%set hours = (total_minutes // 60) | int %}
+                    {%set minutes = (total_minutes % 60) | int %}
+                    {{hours}} hr {{minutes}} min
+                </td>
+                <td>
+                    <a href="{{url_for('user_view_quiz', id=quiz.id)}}" class="btn btn-primary">
+                        View
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="{{url_for('start_quiz', id=quiz.id)}}" class="btn btn-success">
+                        Start
+                        <i class="fas fa-hourglass-start"></i>
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 {% endblock %}

@@ -1,0 +1,90 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+    Quiz {{quiz.id}} ({{quiz.chapter.name}})
+{% endblock %}
+
+{% block content %}
+    <h1 class="fs-1 fw-bold text-primary text-center text-nowrap">Quiz {{quiz.id}} ({{quiz.chapter.name}})</h1>
+
+    <h5 class="text-left mb-0">Question {{current_question + 1}} of {{quiz.questions | length}}</h5>
+
+    <div class="text-right">
+        <p id="timer" class="fs-4 text-danger"></p>
+    </div>
+
+    <form id="quizForm" action="{{ url_for('start_quiz', id=quiz.id, current_question=current_question) }}" method="POST" class="form">
+        <input type="hidden" id="remaining_time" name="remaining_time" value="{{ remaining_time }}">
+        
+        <div class="card mb-4"> <!-- Question & options card begin here -->
+        <div class="form-group">
+        <div class="card-header">
+            <label class="fs-5 form-label" for="question">{{ questions[current_question].question_statement }}</label><br>
+        </div>
+            <div class="card-body">
+                <input type="radio" name="ans" value="{{ questions[current_question].option1 }}" id="option1" required>
+                {{ questions[current_question].option1 }} <br>
+                <input type="radio" name="ans" value="{{ questions[current_question].option2 }}" id="option2">
+                {{ questions[current_question].option2 }} <br>
+                <input type="radio" name="ans" value="{{ questions[current_question].option3 }}" id="option3">
+                {{ questions[current_question].option3 }} <br>
+                <input type="radio" name="ans" value="{{ questions[current_question].option4 }}" id="option4">
+                {{ questions[current_question].option4 }} <br>
+            </div>
+        </div>
+        </div> <!-- Question & options card end here -->
+        <div class="text-center">
+            {% if current_question + 1 == quiz.questions | length %}
+            <button type="submit" formaction="{{ url_for('submit_quiz', id=quiz.id) }}" class="btn btn-success">
+                Submit
+            </button>
+        {% else %}
+            <button type="submit" class="btn btn-primary">
+                Save and Next
+            </button>
+        {% endif %}
+        </div>
+    </form>
+
+    <script>
+        let duration = {{ remaining_time | tojson }};
+        let timer;
+    
+        function startTimer(duration, display) {
+            timer = duration;  // Initialize the timer with the remaining time
+            const form = document.querySelector('form');
+    
+            // Update the hidden input field with the remaining time before form submission
+            form.addEventListener('submit', function () {
+                document.getElementById('remaining_time').value = Math.max(0, Math.floor(timer)); // Ensure it's an integer >= 0
+            });
+    
+            // Start the countdown
+            const interval = setInterval(function () {
+                let minutes = parseInt(timer / 60, 10);
+                let seconds = parseInt(timer % 60, 10);
+    
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+    
+                display.textContent = minutes + ":" + seconds;
+    
+                if (--timer < 0) {
+                    clearInterval(interval);  // Stop the timer
+    
+                    // Set remaining_time to 0 explicitly
+                    document.getElementById('remaining_time').value = 0;
+    
+                    // Force the form to submit to the submit_quiz route
+                    form.action = "{{ url_for('submit_quiz', id=quiz.id) }}";
+                    form.submit();
+                }
+            }, 1000);
+        }
+    
+        window.onload = function () {
+            let display = document.querySelector('#timer');
+            startTimer(duration, display);
+        };
+    </script>
+{% endblock %}
