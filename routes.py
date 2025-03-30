@@ -46,12 +46,15 @@ def index():
     if user.is_admin:
         return redirect(url_for('admin'))
     
+    parameters = {'sname': 'subject', 'qname': 'quiz'}
+    parameter = request.args.get('parameter')
+    query = request.args.get('query','').strip()
     subjects = Subject.query.all()
     now = datetime.now()
     #now= datetime(2025,4,2)
     # Query quizzes that are still valid (future or today)
     quizzes = Quiz.query.filter(Quiz.date_of_quiz >= now.date()).all()
-    return render_template('index.html', subjects=subjects, quizzes=quizzes)
+    return render_template('index.html', subjects=subjects, quizzes=quizzes, param=parameter, query=query, parameters=parameters)
 
 #------------------COMMON ROUTES FOR BOTH USER & ADMIN------------------
 @app.route('/login')
@@ -378,6 +381,43 @@ def admin_summary():
         subject_top_scores=subject_top_scores
     )
 
+#----Route for Admin to Search---------
+@app.route('/admin/search')
+@admin_required
+def admin_search():
+    # Get search parameters
+    parameter = request.args.get('parameter')  # 'user', 'sname', 'qname', or 'question'
+    query = request.args.get('query', '').strip()  # Default to an empty string if no query is provided
+
+    results = None
+    parameters = {'user': 'User',
+                  'sname': 'subject',
+                  'qname': 'quiz',
+                  'question': 'Question', 'chapter': 'Chapter'}
+
+    # Perform search based on the selected parameter
+    if parameter == 'user':  # Search for users
+        results = User.query.filter(
+            User.name.ilike(f"%{query}%") | User.username.ilike(f"%{query}%")
+        ).all()
+    elif parameter == 'sname':  # Search for subjects
+        results = Subject.query.filter(
+            Subject.name.ilike(f"%{query}%")
+        ).all()
+    elif parameter == 'qname':  # Search for quizzes
+        results = Quiz.query.join(Chapter).filter(
+            Chapter.name.ilike(f"%{query}%")
+        ).all()
+    elif parameter == 'question':  # Search for questions
+        results = Question.query.filter(
+            Question.question_statement.ilike(f"%{query}%")
+        ).all()
+    elif parameter == 'chapter':  # Search for chapters
+        results = Chapter.query.filter(
+            Chapter.name.ilike(f"%{query}%")
+        ).all()
+
+    return render_template('admin/admin_search.html', results=results, param=parameter, query=query, parameters=parameters)
 
 # Routes for QUIZ MANAGEMENT Dashboard--------------
 @app.route('/quiz')
@@ -616,6 +656,7 @@ def user_view_quiz(id):
 def user_close_quiz_details():
         return redirect(url_for('index'))
 
+#Route to Start Quiz---
 @app.route('/start_quiz/<int:id>', methods=['GET', 'POST'])
 @auth_required
 def start_quiz(id):
@@ -640,10 +681,8 @@ def start_quiz(id):
         session['answers'] = answers 
 
         session['remaining_time'] = int(request.form.get('remaining_time', session['remaining_time']))
-
-        
+  
         return redirect(url_for('start_quiz', id=id, current_question=current_question + 1))
-
         
     return render_template('user/start_quiz.html',
                            quiz=quiz, questions=questions,
@@ -659,7 +698,7 @@ def submit_quiz(id):
         flash('Quiz does not exist!')
         return redirect(url_for('index'))
     
-    score = 0  # Initialize score
+    score = 0 
     #----score for last question---------
     selected_last_answer = request.form.get('ans')
     length_of_questions = len(quiz.questions)
@@ -669,15 +708,12 @@ def submit_quiz(id):
     questions = quiz.questions
     answers = session.get('answers', {}) 
     answers[str(quiz.questions[length_of_questions-1].id)]= selected_last_answer
-    print(answers)
 
     for question in questions:
         selected_answer = answers.get(str(question.id))  # Use str(question.id) to match the key format
         if selected_answer and selected_answer == question.correct_option:
             score += 1 
 
-    # Convert the user_answers dictionary to a JSON string
-    #user_answers_json = json.dumps(answers)
     score_record = Score(user_id=session['user_id'],
                          quiz_id=quiz.id, score=score,
                          date_attempted=datetime.now().date())
@@ -689,7 +725,7 @@ def submit_quiz(id):
     session.pop('remaining_time', None)
 
     flash(f'Quiz submitted successfully! Your score: {score}/{len(questions)}')
-    return redirect(url_for('index'))
+    return redirect(url_for('score'))
 
 @app.route('/score')
 @auth_required

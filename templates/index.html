@@ -16,6 +16,9 @@
         </thead>
         <tbody>
             {% for quiz in quizzes %}
+            {% if not query or
+                (param=='sname' and query.lower() in quiz.chapter.subject.name.lower()) or
+                 (param=='qname' and query.lower() in quiz.chapter.name.lower())  %}
             <tr>
                 <td>Quiz {{quiz.id}} ({{quiz.chapter.name}})</td>
                 <td>{{quiz.questions|length}}</td>
@@ -37,6 +40,7 @@
                     </a>
                 </td>
             </tr>
+            {% endif %}
             {% endfor %}
         </tbody>
     </table>

@@ -1,0 +1,187 @@
+{% extends 'layout.html' %}
+
+{% block title %}
+Admin Search
+{% endblock %}
+
+{% block content %}
+{% include 'admin/searchbar.html' with context  %}
+<div class="container mt-5">
+    <h1 class="text-center text-primary fw-bold mb-4">Admin Search Results</h1>
+
+    <!-- Display results dynamically -->
+    {% if param == 'user' %}
+        <h2 class="fs-4 fw-bold">Users</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Name</th>
+                    <th>Qualification</th>
+                    <th>Date of Birth</th>
+                    <th>Admin</th>
+                    
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in results %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.name }}</td>
+                    <td>{{ user.qualification or 'N/A' }}</td>
+                    <td>{{ user.dob or 'N/A' }}</td>
+                    <td>{{ 'Yes' if user.is_admin else 'No' }}</td>
+                    
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% elif param == 'sname' %}
+        <h2 class="display-5 fw-bold">Subjects:</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Subject ID</th>
+                    <th>Subject Name</th>
+                    <th>No. of Chapters</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for subject in results %}
+                <tr>
+                    <td>{{subject.id}}</td>
+                    <td>{{subject.name}}</td>
+                    <td>{{subject.chapters|length}}</td>
+                    <td>
+                        <a href="{{url_for('view_subject', id=subject.id)}}" class="btn btn-primary">
+                            View
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{{url_for('edit_subject', id=subject.id)}}" class="btn btn-primary">
+                            Edit
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{{url_for('delete_subject', id=subject.id)}}" class="btn btn-danger">
+                            Delete
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    {% elif param == 'qname' %}
+        <h2 class="display-5 fw-bold">Quizzes:</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Quiz ID</th>
+                    <th>Chapter Name</th>
+                    <th>No. of Questions</th>
+                    <th>Submission Due Date for User</th>
+
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for quiz in results %}
+                <tr>
+                    <td>{{quiz.id}}</td>
+                    <td>{{quiz.chapter.name}}</td>
+                    <td>{{quiz.questions|length}}</td>
+                    <td>{{quiz.date_of_quiz}}</td>
+                    <td>
+                        <a href="{{url_for('view_quiz', id=quiz.id)}}" class="btn btn-primary">
+                            View
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{{url_for('edit_quiz', id=quiz.id)}}" class="btn btn-primary">
+                            Edit
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{{url_for('delete_quiz', id=quiz.id)}}" class="btn btn-danger">
+                            Delete
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% elif param == 'question' %}
+        <h2 class="display-5 fw-bold">Questions:</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Question ID</th>
+                    <th>Question's Title</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for question in results %}
+                <tr>
+                    <td>{{question.id}}</td>
+                    <td>{{question.question_title}}</td>
+                    <td>
+                        <a href="{{url_for('edit_question', id=question.id)}}" class="btn btn-primary">
+                            Edit
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{{url_for('delete_question', id=question.id)}}" class="btn btn-danger">
+                            Delete
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% elif param == 'chapter' %}
+        <h2 class="display-5 fw-bold">Chapters:</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Chapter ID</th>
+                    <th>Chapter Name</th>
+                    <th>No. of Questions</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for chapter in results %}
+                <tr>
+                    <td>{{chapter.id}}</td>
+                    <td>{{chapter.name}}</td>
+                    <td>
+                        {% set total_questions = namespace(count=0) %}
+                        {% for qu in chapter.quizzes %}
+                            {% set total_questions.count = total_questions.count + qu.questions|length %}
+                        {% endfor %}
+                        {{ total_questions.count }}
+                    </td>
+
+                    <td>
+                        <a href="{{url_for('edit_chapter', id=chapter.id)}}" class="btn btn-primary">
+                            Edit
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{{url_for('delete_chapter', id=chapter.id)}}" class="btn btn-danger">
+                            Delete
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    {% else %}
+        <p class="text-center">Hi Admin, Looking for Something?</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,31 @@
+<div class="container-fluid m-1">
+    <div class="row">
+        <div class="col-md-12">
+            <form action="" method="GET">
+                <div class="input-group mb-3">
+                    <!-- Dropdown for selecting search parameter -->
+                    <select name="parameter" id ="parameter" class="parameter form-select w-auto" style="width: 50px;">
+                        {% for parameter in parameters %}
+                        {% if param and parameter == param %}
+                            <option value="{{parameter}}" selected>{{parameters[parameter]}}</option>
+                        {% else %}
+                            <option value="{{parameter}}">{{parameters[parameter]}}</option>
+                        {% endif %}
+                        {% endfor %}
+                    </select>
+
+                    <!-- Input field for search query -->
+                    <input type="text" name="query" class="form-control w-50" value = "{{query}}" placeholder="Search..." required>
+                    
+                    <!-- Search button -->
+                    <span class="input-group-btn">
+                        <button type="submit" class="btn btn-outline-primary">
+                            Search
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </span>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
