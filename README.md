@@ -14,5 +14,5 @@ This is a multi-user web application designed for exam preparation across multip
 1. Navigate to the Project Directory "cd <project-folder>"
 2. Create virtual env if needed
 3. Install the dependencies "pip install -r requirements.txt"
-4.Run the Flask Application "flask run"
+4. 4.Run the Flask Application "flask run"
 
