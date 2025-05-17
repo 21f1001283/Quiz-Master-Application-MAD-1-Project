@@ -15,7 +15,7 @@ This is a multi-user web application designed for exam preparation across multip
 2. Create virtual env if needed
 3. Install the dependencies "pip install -r requirements.txt"
 4. 4.Run the Flask Application "flask run"
-   NOTE: When you run the app Admin is already craeted. Code for that can be found at the bottom of models.py file where you can also find the Admin credentials: the usernamme and password.
+NOTE: When you run the app Admin is already craeted. Code for that can be found at the bottom of models.py file where you can also find the Admin credentials: the usernamme and password.
    
 ## ER Diagram for the models:
 
