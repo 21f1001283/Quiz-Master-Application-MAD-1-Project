@@ -15,4 +15,8 @@ This is a multi-user web application designed for exam preparation across multip
 2. Create virtual env if needed
 3. Install the dependencies "pip install -r requirements.txt"
 4. 4.Run the Flask Application "flask run"
+   
+## ER Diagram for the models:
+
+![ER Diagram](https://github.com/user-attachments/assets/56e3814a-ba75-43ab-b75b-7d90134fc741)
 
